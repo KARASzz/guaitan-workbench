@@ -1,0 +1,705 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-page-node-id="NMrF3qznwMC7RuISRLsCK9"><head data-page-node-id="IiNgCB4liMx2rjnRSV60DS">
+<meta charset="UTF-8" data-page-node-id="XL6hrSBEWyZ9GODyTPJFmU">
+<meta name="viewport" content="width=device-width, initial-scale=1" data-page-node-id="LyoPtfEV7MNyWv05KEYzSF">
+<title>怪谈·文字生产工作台</title>
+<style>
+  :root{
+    --bg:#14161a; --panel:#1b1e24; --panel2:#20242b; --line:#2c313a;
+    --txt:#e6e8ec; --dim:#8d95a3; --accent:#c8a06a; --accent2:#7fa8a0;
+    --warn:#c97b6e; --ok:#83a985; --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;background:var(--bg);color:var(--txt);
+    font:13px/1.6 -apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif}
+  button,input,select,textarea{font-family:inherit;color:inherit}
+  button{cursor:pointer}
+  input,select,textarea{background:#12151a;border:1px solid var(--line);border-radius:4px;
+    padding:5px 7px;outline:none;font-size:12px}
+  input:focus,select:focus,textarea:focus{border-color:var(--accent)}
+  textarea{resize:vertical;width:100%}
+  .app{display:flex;flex-direction:column;height:100vh}
+  header{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid var(--line);
+    background:var(--panel);flex:none;flex-wrap:wrap}
+  header h1{font-size:14px;margin:0;font-weight:600;letter-spacing:.06em}
+  header h1 span{color:var(--accent)}
+  .chip{font:11px var(--mono);color:var(--dim);border:1px solid var(--line);
+    border-radius:3px;padding:2px 6px}
+  .sp{flex:1}
+  .btn{background:var(--panel2);border:1px solid var(--line);border-radius:4px;
+    padding:5px 10px;font-size:12px;color:var(--txt)}
+  .btn:hover{border-color:var(--accent)}
+  .btn.primary{background:var(--accent);color:#1a1610;border-color:var(--accent);font-weight:600}
+  .btn.primary:hover{filter:brightness(1.1)}
+  .btn.ghost{background:transparent;color:var(--dim)}
+  .btn.sm{padding:2px 7px;font-size:11px}
+  main{display:grid;grid-template-columns:290px minmax(420px,1fr) 320px;gap:1px;
+    background:var(--line);flex:1;min-height:0}
+  .col{background:var(--bg);overflow-y:auto;padding:10px;display:flex;flex-direction:column;gap:10px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:5px;padding:10px}
+  .card h2{font-size:11px;letter-spacing:.12em;color:var(--dim);margin:0 0 9px;
+    font-weight:600;text-transform:uppercase;display:flex;align-items:center;gap:6px}
+  .card h2 .n{font:10px var(--mono);color:var(--accent)}
+  .row{display:flex;gap:6px;align-items:center;margin-bottom:6px}
+  .row:last-child{margin-bottom:0}
+  .row>label{width:62px;flex:none;color:var(--dim);font-size:11px}
+  .row>input,.row>select{flex:1;min-width:0}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px}
+  .seed{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:8px}
+  .seed button{background:var(--panel2);border:1px solid var(--line);border-radius:3px;
+    padding:4px 8px;font-size:11px;color:var(--dim)}
+  .seed button.on{border-color:var(--accent);color:var(--accent);background:#2a231a}
+  .tagline{font:11px/1.6 var(--mono);color:var(--dim);margin:6px 0}
+  .param{display:grid;grid-template-columns:74px 1fr 34px;gap:6px;align-items:center;margin-bottom:5px}
+  .param label{font-size:11px;color:var(--dim)}
+  .param output{font:11px var(--mono);color:var(--accent);text-align:right}
+  input[type=range]{width:100%;accent-color:var(--accent);height:14px;padding:0;background:none;border:none}
+  .selrow{display:grid;grid-template-columns:74px 1fr;gap:6px;align-items:center;margin-bottom:5px}
+  .selrow label{font-size:11px;color:var(--dim)}
+  .char-item{border:1px solid var(--line);border-radius:4px;padding:7px;margin-bottom:6px;background:var(--panel2)}
+  .char-item.on{border-color:var(--accent)}
+  .char-head{display:flex;align-items:center;gap:6px}
+  .char-head b{font-size:12px;flex:1}
+  .char-meta{font:10px var(--mono);color:var(--dim);margin-top:3px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .bar{height:4px;background:#0f1216;border-radius:2px;overflow:hidden;margin-top:3px}
+  .bar i{display:block;height:100%;background:var(--accent2)}
+  .bar.bond i{background:var(--accent)}
+  .bar.hp i{background:var(--warn)}
+  .kv{display:grid;grid-template-columns:auto 1fr;gap:2px 8px;font:11px var(--mono)}
+  .kv span:nth-child(odd){color:var(--dim)}
+  .list-item{display:flex;gap:6px;align-items:center;padding:4px 0;border-bottom:1px dashed var(--line);font-size:11px}
+  .list-item:last-child{border:none}
+  .list-item .nm{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .list-item .sub{color:var(--dim);font:10px var(--mono)}
+  .mini{font:10px var(--mono);color:var(--dim)}
+  svg.map{width:100%;height:190px;background:#111419;border:1px solid var(--line);border-radius:4px;display:block}
+  .chapter-out{background:#111419;border:1px solid var(--line);border-radius:4px;padding:12px;
+    min-height:220px;white-space:pre-wrap;font:13px/1.9 "Songti SC","SimSun",serif;color:#dfe2e8}
+  .chapter-out:empty::before{content:"本章正文将显示在这里";color:#565d69;font-family:sans-serif;font-size:12px}
+  .delta{font:11px/1.6 var(--mono);color:var(--accent2);background:#161d1c;
+    border:1px solid #2c3b38;border-radius:4px;padding:8px;margin-top:8px;white-space:pre-wrap}
+  details.api summary{cursor:pointer;font-size:11px;color:var(--dim);letter-spacing:.05em}
+  details.api .body{padding-top:8px}
+  .bound{background:#241d1b;border:1px solid #4a332c;border-radius:4px;padding:7px 9px;
+    font-size:11px;color:#d6a99c;line-height:1.6}
+  footer{flex:none;border-top:1px solid var(--line);background:var(--panel);padding:5px 14px;
+    font:10px var(--mono);color:var(--dim);display:flex;gap:14px;flex-wrap:wrap}
+  .tabbar{display:flex;gap:4px;margin-bottom:8px}
+  .tabbar button{flex:1;background:var(--panel2);border:1px solid var(--line);color:var(--dim);
+    border-radius:3px;padding:4px;font-size:11px}
+  .tabbar button.on{color:var(--accent);border-color:var(--accent)}
+  .hidden{display:none}
+  .toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#2a2f37;
+    border:1px solid var(--accent);border-radius:4px;padding:7px 14px;font-size:12px;z-index:99}
+  @media(max-width:1100px){main{grid-template-columns:1fr;overflow-y:auto}.col{overflow:visible}}
+</style>
+<style id="__dm_no_drag_style__">* { -webkit-user-drag: none !important; }</style><style id="__dm_bindable_badge_style__">[data-sp-bindable="database"]{outline:1px dashed #0088ff;outline-offset:2px;border-radius:4px;}[data-sp-bindable="database"] *{pointer-events:none !important;transition:none !important;animation:none !important;}[data-sp-bindable="database"]{transition:none !important;animation:none !important;}</style></head>
+<body data-page-node-id="B44au9vqgRSEkqI7XrAfEt" style="">
+<div class="app" data-page-node-id="sdCcrXp4Yh6n8WcEYAgtVQ">
+  <header data-page-node-id="XO34BaWRbq4yXbdl2ICfRw">
+    <h1 data-page-node-id="RtJTotKR05duogbEYb2FJC">怪谈<span data-page-node-id="Avz29e2sYiAgGJX7yxfts2">·</span>文字生产工作台</h1>
+    <span class="chip" id="chipChapter" data-page-node-id="U9wrTSrBq0BQpeDW9LMDth">第 1 章</span>
+    <span class="chip" id="chipWorld" data-page-node-id="abTckAgR8EwMRK5nxb6aV0">雾镇疫变</span>
+    <span class="chip" id="chipSaved" data-page-node-id="dFxOrQus9E43eeQQtGGMpD">已保存</span>
+    <div class="sp" data-page-node-id="nibk9GNWvkQWul8oUPgDEn"></div>
+    <button class="btn" id="btnPrompt" data-page-node-id="UWqNMpjASktABsgrRAbWgt">生成提示词</button>
+    <button class="btn primary" id="btnGen" data-page-node-id="JGRb7Icsg28fbODJ4VtfD6">调用模型写本章</button>
+    <button class="btn" id="btnNewChapter" data-page-node-id="PBesmjzlaINtQxQYcZjFfm">归档 / 下一章</button>
+    <button class="btn" id="btnMd" data-page-node-id="jVbT4DVQnSYY13SEOifOLq">导出全书</button>
+    <button class="btn ghost" id="btnJson" data-page-node-id="EyWVnlwJDLXMd7OzXtQgMy">设定 JSON</button>
+    <button class="btn ghost" id="btnImport" data-page-node-id="9CLdlZLrEoAwupTNzCc7lj">导入</button>
+    <input type="file" id="fileImport" accept=".json" class="hidden" data-page-node-id="8WblLoGQT9eNnO0CKYWeak">
+  </header>
+
+  <main data-page-node-id="SQaFYhIHwSF61w47VmdWIK">
+    <!-- ============ 左列 ============ -->
+    <div class="col" data-page-node-id="dwWED4sYSPBZ8b7SnETqZ3">
+      <div class="card" data-page-node-id="BkQaJC7ccMapRWw78rxhJQ">
+        <h2 data-page-node-id="LeDz8vmGTHKlWbJtOnsrxB">世界观种子选择器 <span class="n" id="seedCount" data-page-node-id="DYkjBDN4padf3BJjgORYjN">6 个预设</span></h2>
+        <div class="seed" id="seedList" data-page-node-id="tgVAU3GQ7AEafMt5kKZNEk"><button data-seed="0" class="on">雾镇疫变</button><button data-seed="1" class="">深海钻井平台</button><button data-seed="2" class="">废土佛寺</button><button data-seed="3" class="">志怪衙门</button><button data-seed="4" class="">沿海无灯县</button><button data-seed="5" class="">旧楼共修院</button></div>
+        <div class="row" data-page-node-id="Ceh7ff9ewiFw1iERmNEoh4"><label data-page-node-id="0DF4KGC25YwYA3SjBn5jv5">种子名</label><input id="wName" data-page-node-id="aXGA64EHt8gk0zGsnFziaO"></div>
+        <div class="row" data-page-node-id="6mwWj2f8ARGUr0O1GqrjQp"><label data-page-node-id="wkWEr6f36uy0yKEjYZq1EV">时代 / 舞台</label><input id="wEra" data-page-node-id="y8nVNtMXpwHecAddYaEGeX"></div>
+        <div class="row" data-page-node-id="OgKDU4MQTFO7IRKkmYdi2w"><label data-page-node-id="DSVPCmkGNbvWuRFv1nzPSY">怪异类型</label><input id="wHorror" data-page-node-id="0dNpsv2I1lLKySWZHrZgKp" style=""></div>
+        <div class="row" data-page-node-id="hBE7LyaizS1t7IkeqOKIv9"><label data-page-node-id="iVYCABDW6TaMZN54J7AVGW">规则</label><input id="wRules" placeholder="这个世界不可违背的 1-3 条铁律" data-page-node-id="XRdedqgP7gqKKg8SOsFKqd"></div>
+        <div class="row" data-page-node-id="4TRLavYx2jBLP5P1N7dYC0"><label data-page-node-id="bWYC6MU3J56KITMNPB7DKC">自定义</label><input id="wTags" placeholder="逗号分隔的补充标签" data-page-node-id="jjPMF4SVDNGxl3jGEOj2Qm"></div>
+        <div class="row" data-page-node-id="7ZFdnftFih6PsxPgZoJJC7"><button class="btn sm" id="btnRandomSeed" data-page-node-id="PtGEbwe0ETXtP0QnEvcP2a">掷一个随机种子</button>
+          <button class="btn sm ghost" id="btnApplySeed" data-page-node-id="seWM2fpHbnEQyDIBO0uUH9">应用到设定</button></div>
+        <div class="tagline" id="seedDesc" data-page-node-id="5yIv4LVE3h1GrU1BGNTNGr">／ 每有一人病愈，镇上就多出一个『原本就在这里』的人。</div>
+      </div>
+
+      <div class="card" data-page-node-id="ZRaipPDSP3xF6r1iAVnv3F">
+        <h2 data-page-node-id="nqdC8UuFTKpFkkYzBJu1Ln">捏人 / 角色档案 <span class="n" id="charCount" data-page-node-id="BvySN9UyPhHSXhSXw09LGi">3 人</span></h2>
+        <div id="charList" data-page-node-id="Egm7NNi3CsCDhZiIR5KwvU"><div class="char-item" data-char="a1djh2f">
+      <div class="char-head"><b>沈砚</b><span class="mini">Lv.1 · 主角</span>
+      <button class="btn sm ghost" data-delchar="a1djh2f">×</button></div>
+      <div class="char-meta">还俗的仵作，能看见死人脸上多出来的那一张 ／ 沉默,执拗,不信神</div></div><div class="char-item" data-char="ejfzac2">
+      <div class="char-head"><b>阿蘅</b><span class="mini">Lv.2 · 同行</span>
+      <button class="btn sm ghost" data-delchar="ejfzac2">×</button></div>
+      <div class="char-meta">守灯人一脉，提灯照出替身 ／ 冷静,嘴硬,护短</div></div><div class="char-item" data-char="ojdnrso">
+      <div class="char-head"><b>白姑娘</b><span class="mini">Lv.3 · 同行</span>
+      <button class="btn sm ghost" data-delchar="ojdnrso">×</button></div>
+      <div class="char-meta">药铺东家，通合修之术 ／ 温和,算计,重诺</div></div></div>
+        <div class="row" data-page-node-id="yaj90rV3FWr6I9AEofnYS7"><label data-page-node-id="RNVi7bFiTnkhBFrCD8FHnz">姓名</label><input id="cName" placeholder="角色名" data-page-node-id="68Z0umhULcQBJAOlnZHzBm"></div>
+        <div class="row" data-page-node-id="LOBBc7AAGLtQxmFw5IgS4C"><label data-page-node-id="NwBcbUIzdRDuZZOn9YVjv1">定位</label><select id="cRole" data-page-node-id="WmKzEGQ28SGlKdJfNmCSnr">
+          <option value="主角" data-page-node-id="4JH0I0lIFuc5UQTz18YLYF">主角</option><option value="同行" data-page-node-id="MjlHeHVt1yHxcMHOJBh8Ic">同行 / 女主</option>
+          <option value="对手" data-page-node-id="3hdFtVlzdvBTTH6OhtIFEt">对手</option><option value="NPC" data-page-node-id="wEVr6tPfOWYpDX9NJyp6Xb">NPC</option></select></div>
+        <div class="row" data-page-node-id="gWxedRyllrN4YexpZGWaUc"><label data-page-node-id="l3f06VF7PBZIkd2sIcbkP0">身份</label><input id="cArchetype" placeholder="如：还俗的仵作 / 守灯人" data-page-node-id="B0TrvoVwhCCphidvHj5OTk"></div>
+        <div class="row" data-page-node-id="LZjFKqrC2ysZVf5AlzATWR"><label data-page-node-id="C8RPrhHRtSfzxbklOg4gp2">性格</label><input id="cPersonality" placeholder="逗号分隔" data-page-node-id="4eYBb9udV5b4GaRlODF9ar"></div>
+        <div class="row" data-page-node-id="XB8lKa1aPwHH1WElEsgcDA"><label data-page-node-id="XL2yAa1OvEFT6aSY0H9Xet">外形</label><input id="cAppearance" placeholder="关键词即可" data-page-node-id="qGZuqffJHIhE2H0rhefOPe"></div>
+        <div class="row" data-page-node-id="Ar4DhyYTz1BvhaJiGArE49"><label data-page-node-id="MUQpcG4vLJIci0REg7Abyl">初始等级</label><input id="cLevel" type="number" value="1" min="1" max="99" data-page-node-id="gPM9Em4QGlNCpD1bUydjLQ"></div>
+        <div class="row" data-page-node-id="uKh7PHX53W0G3FRdgOapaQ"><button class="btn sm" id="btnAddChar" data-page-node-id="ceJGDWpJNnTGs2GNFKuR9T">加入角色表</button>
+          <button class="btn sm ghost" id="btnClearChar" data-page-node-id="lcmHlESMTfEA47DiEtF6rV">清空表单</button></div>
+      </div>
+
+      <details class="api card" data-page-node-id="1OtS5WMpvB4RfUdnJ503dv">
+        <summary data-page-node-id="GaiQZVn4DIT5wdad4PG8sh">模型接口 / API 设置</summary>
+        <div class="body" data-page-node-id="mpbNP1bFc1nuPKBtDkkM2Y">
+          <div class="row" data-page-node-id="rdAePUrNlvt0Ay7DFU6gt1"><label data-page-node-id="b8xOZgYuuA0GOuwutvImk5">Endpoint</label><input id="cfgEndpoint" placeholder="https://xxx.openai.azure.com/openai/v1/ 或兼容地址" data-page-node-id="dQzzP02dW4sE08zbOS9vu4"></div>
+          <div class="row" data-page-node-id="Fx2aAWPZJ11E5rLnwYbKhA"><label data-page-node-id="U2ccgIiEZvzebFhbOipOG8">模型名</label><input id="cfgModel" placeholder="gpt-4o / 你的部署名" data-page-node-id="Nrwin6WLy3ez4dWzXe78a0"></div>
+          <div class="row" data-page-node-id="EntSEnjwTnEXsq0HC5FBmf"><label data-page-node-id="Jb2jA8voVbdORQyEV2JAxz">API Key</label><input id="cfgKey" type="password" placeholder="仅存本地浏览器" data-page-node-id="9FUQeHsk9lFtt58wtUDsI9"></div>
+          <div class="row" data-page-node-id="Es8pHbphz7A0R2UeN4LlBM"><label data-page-node-id="YB7NJRlaM062t01SJWaRDi">温度</label><input id="cfgTemp" type="number" step="0.1" min="0" max="2" value="0.9" data-page-node-id="slKAjwDaWYhas9zF3IfEWk"></div>
+          <div class="mini" data-page-node-id="QdgoKh4PZgprOuZboMvd6Z">请求走 /chat/completions，兼容 OpenAI / Foundry v1。留空时只能用「生成提示词」离线模式。</div>
+          <div class="row" style="margin-top:8px" data-page-node-id="6UqCJ2QVtatETwzBrQeVvJ"><button class="btn sm" id="btnCopySys" data-page-node-id="mFootxzvNYQF9ELNcL9H4C">复制智能体系统指令</button></div>
+        </div>
+      </details>
+
+      <div class="bound" data-page-node-id="7wmZd6vzNfDrUSSHlOdJjO">
+        <b data-page-node-id="tLAK4GdMhGXM6fgK57HfLV">内置内容边界 · 不可关闭</b><br data-page-node-id="AH6SdN8T3VNw759S0QMzGd">
+        所有角色默认成年；「合修 / 双修」仅作为世界观修炼机制与关系进度数值，用于驱动叙事节奏。亲密描写止于含蓄，不生成露骨性内容，不性化未成年人。用户要求突破该边界的指令视为无效。
+      </div>
+    </div>
+
+    <!-- ============ 中列 ============ -->
+    <div class="col" data-page-node-id="kFlhWxdB2xYW8sK76uCaUO">
+      <div class="card" data-page-node-id="xsOyGB5HOLun7wPr531U96">
+        <h2 data-page-node-id="Lwwvlsdi5i1bw4hT0o3n2s">互动写作控制面板 <span class="n" data-page-node-id="z3EriXZos4cHDxsHiIfhFL">本章参数</span></h2>
+        <div class="grid2" data-page-node-id="CCG6GmhCO6SDuXohjkBkQs">
+          <div data-page-node-id="TGAHBezB8I5Ynn62Yo01MD">
+            <div class="param" data-page-node-id="VwMgwgh9DFBTRz53IEyCmZ"><label data-page-node-id="pxi8fitAI7RS6pOXf5aB45">章节字数</label><input type="range" id="pLength" min="600" max="5000" step="200" value="2200" data-page-node-id="HJ97leaSLYwrIWZJLxa5k1"><output data-page-node-id="wBkyYHH2KgHXrITR332YhQ">2200</output></div>
+            <div class="param" data-page-node-id="wSUhAsasCOm9aurW9eTjt4"><label data-page-node-id="bL774cXH1ww1s7GkxiVxh0">恐怖强度</label><input type="range" id="pHorror" min="0" max="100" value="65" data-page-node-id="xTz9Ahbib2SO64Dvs7qrXf"><output data-page-node-id="IRDxm4nlBHRndsPUzoPoD3">65</output></div>
+            <div class="param" data-page-node-id="5u4v8MHRvVa6Vlz6D1xIV1"><label data-page-node-id="mnjcdurBBapKaTqA5MheJL">打斗密度</label><input type="range" id="pCombat" min="0" max="100" value="55" data-page-node-id="ObwJtTKnQFzU509Ln4hTa4"><output data-page-node-id="BRpKC1kjS956GdUru7XwIC">55</output></div>
+            <div class="param" data-page-node-id="NBFlZJz64dHQ0bEkOisBc3"><label data-page-node-id="OrTkEWKmr80xKZCK1NYxrP">悬念钩子</label><input type="range" id="pSuspense" min="0" max="100" value="70" data-page-node-id="CagiBco0wSTq3Q3yJkHRk8"><output data-page-node-id="JMrKQJOGbj0AzQKzEHJKHq">70</output></div>
+            <div class="param" data-page-node-id="vtZFYoJWcVLz0gxTOgIeEw"><label data-page-node-id="ByOMNQyl7XOig7DAWctvGG">怪异 / 规则感</label><input type="range" id="pWeird" min="0" max="100" value="60" data-page-node-id="7EClFj1hRgsetyNmU9sAMH"><output data-page-node-id="EmZwKgIPHqh4DnLK6hD1VM">60</output></div>
+            <div class="param" data-page-node-id="OuqAhOmAKAspBWViFCbEu1"><label data-page-node-id="jEGKrCBTkIoG7sXjVntu14">关系推进</label><input type="range" id="pBond" min="0" max="100" value="30" data-page-node-id="LcCz9GawwChzS4v7JzbxWV"><output data-page-node-id="SDcN1A3uhTHGIhqkIo8e1D">30</output></div>
+          </div>
+          <div data-page-node-id="ITH85nKkem7B1Vkbcft4ic">
+            <div class="param" data-page-node-id="bqXkBtnzvTaD778YI81OOd"><label data-page-node-id="jT0zj9grxP6vzKAlUPM0Bi">升级幅度</label><input type="range" id="pLevel" min="0" max="100" value="40" data-page-node-id="cyJD0OrEeDXBVdClO2pJIY"><output data-page-node-id="VyQzypfJF5L1E3l80e3eme">40</output></div>
+            <div class="param" data-page-node-id="AB6AlkUehSDwE137TaFKHD"><label data-page-node-id="8w1zZsETS3WkbF5XXwLaDA">道具掉落</label><input type="range" id="pLoot" min="0" max="100" value="35" data-page-node-id="vX2wtHhId8lSxqLlLzYdJ9"><output data-page-node-id="KCaUJaGA7rhrTeI2jUYp0U">35</output></div>
+            <div class="param" data-page-node-id="BRYOsHJZa1GIHzhgH695wS"><label data-page-node-id="gTBwr4LStYbrUNgqGEpv1M">节奏快慢</label><input type="range" id="pPace" min="0" max="100" value="50" data-page-node-id="lhBiALhIq8lkHQQYXHoTfY"><output data-page-node-id="T7hQvcDwFxoGDBkH8msZBu">50</output></div>
+            <div class="param" data-page-node-id="IPyPa7pL1X1aRmdVMBiH4E"><label data-page-node-id="pts8AhHh99UyP2HOn0y26c">血腥度</label><input type="range" id="pGore" min="0" max="60" value="20" data-page-node-id="gg7wzBoc2opcteSMa6MMeA"><output data-page-node-id="RGuCrvTNWMGelu58KCyHZM">20</output></div>
+            <div class="selrow" data-page-node-id="bxMEHsgdSRFaeCTuCbcBlJ"><label data-page-node-id="OEG8BmE2vSuwRMOmQ40DbD">叙事视角</label><select id="pPov" data-page-node-id="cXBWyjFOxF33tpmgRMHlG1"><option data-page-node-id="fDOKJLOP2m4JbTkwXuouT7">第三人称限知</option><option data-page-node-id="oyno27dS5rWVncLOCiNoFZ">第一人称</option><option data-page-node-id="sCT0Ktlebe6YUcDtAXomn6">第三人称全知</option></select></div>
+            <div class="selrow" data-page-node-id="8cRKjAajYoa3WtjrtgrBrX"><label data-page-node-id="qWYLLlYFdo4ZCkQT094zWN">文风</label><select id="pStyle" data-page-node-id="eUaxsnqRql3NaMbFrKmkz3"><option data-page-node-id="G1MbDae0nYnE2NspPC7vsT">冷硬白描</option><option data-page-node-id="qLAf08gxZYKlJfG76UhVes">明清志怪</option><option data-page-node-id="wAt1SD7H6Eu39uL8hFWRho">克苏鲁式不可名状</option><option data-page-node-id="RhHyMhbovTYTevXQAMCXP2">民俗怪谈</option><option data-page-node-id="jFfMeHZcj7D0YADDCT9HV2">网文爽感</option></select></div>
+          </div>
+        </div>
+        <div class="row" style="margin-top:6px" data-page-node-id="L3FYViZ3MtVGXUGQHblLx3"><label data-page-node-id="Mti7bxGjRHEcLMCKKF4Q0m">本章目标</label><input id="pGoal" placeholder="如：主角在义庄首次遭遇「借脸的东西」，与阿蘅结伴，获得第一件法器" data-page-node-id="CWJhEoHwQin8rQxAU6Z7hg"></div>
+        <div class="row" data-page-node-id="LBOhP77TZGM0c3453exlzS"><label data-page-node-id="qB7vnGiBpMCIFmXdMxlfk2">当前场景</label><select id="pScene" data-page-node-id="yCvk1SsUcQi6SX644HgYIm"><option value="n1" selected="">义庄</option><option value="n2">雾镇长街</option><option value="n3">药铺</option><option value="n4">河埠头（未探索）</option><option value="n5">城隍后殿（未探索）</option></select></div>
+        <div class="row" data-page-node-id="1G3WRB8VtDIAFUprZLnJOM"><label data-page-node-id="TnBTA2N5kSmRz56VeVb4pm">必须出现</label><input id="pMust" placeholder="逗号分隔：元素 / 台词 / 伏笔" data-page-node-id="BYGA27qSG1UrJbIb60E5qR"></div>
+        <div class="row" data-page-node-id="mFBdun3HEnp1zd7cRjXWLr"><label data-page-node-id="OGlv05J9tdloC3ex5PBrPK">禁止出现</label><input id="pAvoid" placeholder="逗号分隔" data-page-node-id="bImGOhhBVrvQB5k47vhof6"></div>
+      </div>
+
+      <div class="card" style="flex:1;display:flex;flex-direction:column;min-height:300px" data-page-node-id="KDFUqD188uR749EL0t9Q17">
+        <h2 data-page-node-id="x9DILoY4uL5EPtTOVQwN1h">章节工作区 <span class="n" id="chTitleLabel" data-page-node-id="K3Quxwiq2e1t7jNCnhX488">未命名章节</span></h2>
+        <div class="row" data-page-node-id="UJNeZx4mokknp0aMTW2XE0"><label data-page-node-id="7zwHuvWzMl539uWywzCCNZ">章节标题</label><input id="chTitle" placeholder="留空则由模型拟题" data-page-node-id="vxVjR5Tezyyx60eX2wdIvl"></div>
+        <div id="chapterOut" class="chapter-out" data-page-node-id="gO3sP6QWxTfyQ2a4Zti2qz"></div>
+        <div id="deltaOut" class="delta hidden" data-page-node-id="K9YcjtF4iAvO8CPWstc89C"></div>
+        <div class="row" style="margin-top:8px" data-page-node-id="U1BbNcvd7KQJe6vWEk2Jc2">
+          <button class="btn sm" id="btnParse" data-page-node-id="t6Wt3yp4YztjACjKHX7UY2">解析状态增量并回填面板</button>
+          <button class="btn sm ghost" id="btnCopyPrompt" data-page-node-id="JetPrIgzvAsCWbsGBTvHOc">复制本章提示词</button>
+          <span class="mini" id="genStatus" data-page-node-id="VFqQk5JHT8mrGW2QxcbNaV"></span>
+        </div>
+        <div class="mini" style="margin-top:6px" data-page-node-id="LttFAmf8hMOjNRW0whVnvK">离线用法：生成提示词 → 贴给任意模型 → 把回复粘回上方正文区 → 解析回填。</div>
+      </div>
+
+      <div class="card" data-page-node-id="Rx77R7O1Jo6neSfeYpUbER">
+        <h2 data-page-node-id="4z2DVcaDgMMJkuJDo34XwM">已归档章节 <span class="n" id="archiveCount" data-page-node-id="KYhw2YYhW3BrOcOypjweyu">0 章</span></h2>
+        <div id="archiveList" class="mini" data-page-node-id="Z2FBlBAhhkleYnx0Ep8LZG">暂无。</div>
+      </div>
+    </div>
+
+    <!-- ============ 右列 ============ -->
+    <div class="col" data-page-node-id="ZVXhwKcXPWfmogRRIHFsV5">
+      <div class="card" data-page-node-id="iq3Mc4myOtEdxjrze9t0E6">
+        <h2 data-page-node-id="hkwc7lkfXIk6JpYdmcBu2q">世界地图可视化</h2>
+        <svg class="map" id="mapSvg" viewBox="0 0 300 190" data-page-node-id="QHSgQStGclfMy29EFnUAzA"><g><line x1="48" y1="130" x2="130" y2="95" stroke="#6f7c86" stroke-width="1" stroke-dasharray="none"></line><line x1="130" y1="95" x2="215" y2="62" stroke="#6f7c86" stroke-width="1" stroke-dasharray="none"></line><line x1="215" y1="62" x2="80" y2="42" stroke="#3a4049" stroke-width="1" stroke-dasharray="3 3"></line><line x1="80" y1="42" x2="250" y2="145" stroke="#3a4049" stroke-width="1" stroke-dasharray="3 3"></line></g><g><g data-node="n1" style="cursor:pointer">
+      <circle cx="48" cy="130" r="9" fill="#c8a06a" fill-opacity="0.85" stroke="#e8c99a" stroke-width="1.5"></circle>
+      <text x="48" y="118" text-anchor="middle" font-size="9" fill="#e8c99a">义庄</text>
+      <text x="48" y="133" text-anchor="middle" font-size="7" fill="#12151a">35</text></g><g data-node="n2" style="cursor:pointer">
+      <circle cx="130" cy="95" r="6" fill="#7fa8a0" fill-opacity="0.85" stroke="none" stroke-width="1.5"></circle>
+      <text x="130" y="83" text-anchor="middle" font-size="9" fill="#a7aeb9">雾镇长街</text>
+      <text x="130" y="98" text-anchor="middle" font-size="7" fill="#12151a">50</text></g><g data-node="n3" style="cursor:pointer">
+      <circle cx="215" cy="62" r="6" fill="#7fa8a0" fill-opacity="0.85" stroke="none" stroke-width="1.5"></circle>
+      <text x="215" y="50" text-anchor="middle" font-size="9" fill="#a7aeb9">药铺</text>
+      <text x="215" y="65" text-anchor="middle" font-size="7" fill="#12151a">25</text></g><g data-node="n4" style="cursor:pointer">
+      <circle cx="80" cy="42" r="6" fill="#5d6570" fill-opacity="0.35" stroke="none" stroke-width="1.5"></circle>
+      <text x="80" y="30" text-anchor="middle" font-size="9" fill="#a7aeb9">河埠头</text>
+      <text x="80" y="45" text-anchor="middle" font-size="7" fill="#12151a">70</text></g><g data-node="n5" style="cursor:pointer">
+      <circle cx="250" cy="145" r="6" fill="#5d6570" fill-opacity="0.35" stroke="none" stroke-width="1.5"></circle>
+      <text x="250" y="133" text-anchor="middle" font-size="9" fill="#a7aeb9">城隍后殿</text>
+      <text x="250" y="148" text-anchor="middle" font-size="7" fill="#12151a">85</text></g></g>
+    <text x="8" y="182" font-size="8" fill="#6f7784">数字＝危险度　实心＝已探索　空心＝未探索</text></svg>
+        <div class="row" style="margin-top:7px" data-page-node-id="vUupCCfdrhVNx0cYWo4X0v"><input id="nodeName" placeholder="新地点名" style="flex:1" data-page-node-id="dxfrqhogvGjaCVoHVMrcuZ">
+          <input id="nodeDanger" type="number" min="0" max="100" value="50" style="width:52px" title="危险度" data-page-node-id="aBOxvOIOh98DOgp6oqHk6M">
+          <button class="btn sm" id="btnAddNode" data-page-node-id="Mdsjirec2p6uZ24ZKApG3e">添加</button></div>
+        <div class="mini" data-page-node-id="pwB69C3eVXUkqXkQAFLLP9">点节点设为本章场景 / 当前位置；双击节点删除。虚线＝未探索路径。</div>
+      </div>
+
+      <div class="card" data-page-node-id="IvuCqkrPeCB8oCdC5EtQM4">
+        <h2 data-page-node-id="tXVe9Hq4jqxQSljY8fACxj">人物属性面板 <span class="n" id="attrName" data-page-node-id="BFBERCf8iWl5FotF45BZJG">Lv.1 · 主角</span></h2>
+        <div class="tabbar" id="attrTabs" data-page-node-id="HrmATGlhhONT3qeJbwapkx"><button data-atab="a1djh2f" class="on">沈砚</button><button data-atab="ejfzac2" class="">阿蘅</button><button data-atab="ojdnrso" class="">白姑娘</button></div>
+        <div id="attrBody" data-page-node-id="eDDks0mQrsQQLRgVDkQ8fL"><div class="kv"><span>等级</span><span>1</span><span>经验</span><span>0</span><span>生命</span><span>100</span><span>理智</span><span>90</span><span>攻击</span><span>12</span><span>防御</span><span>10</span><span>灵力</span><span>20</span></div>
+    <div class="bar hp"><i style="width:100%"></i></div>
+    <div class="mini">生命</div><div class="bar"><i style="width:90%"></i></div>
+    <div class="mini">理智</div><div class="bar"><i style="width:20%"></i></div>
+    <div class="mini">灵力（合修 / 打怪的共用资源）</div>
+    <div class="row" style="margin-top:8px"><label style="width:40px">调整</label>
+      <select id="attrKey"><option value="level">等级</option><option value="exp">经验</option><option value="hp">生命</option><option value="sanity">理智</option><option value="atk">攻击</option><option value="def">防御</option><option value="qi">灵力</option></select>
+      <input id="attrVal" type="number" value="1" style="width:56px">
+      <button class="btn sm" id="btnAttrAdd">＋</button></div>
+    <div class="mini" style="margin-top:5px">青布短褐，左手缺半截小指</div></div>
+      </div>
+
+      <div class="card" data-page-node-id="cPP5PKGlHGccmlq79HNul4">
+        <h2 data-page-node-id="3XyU66AcpBnkrqjuqqQAfs">亲密度 / 关系进度</h2>
+        <div id="bondList" data-page-node-id="ulLGj0ysDgtGoLZqWnuBER"><div style="margin-bottom:9px">
+    <div class="row" style="margin:0"><b style="flex:1;font-size:12px">沈砚</b>
+      <span class="mini">陌生</span>
+      <button class="btn sm ghost" data-bond="-5" data-id="a1djh2f">−</button>
+      <button class="btn sm ghost" data-bond="5" data-id="a1djh2f">＋</button>
+      <span class="mini" style="width:26px;text-align:right;color:var(--accent)">0</span></div>
+    <div class="bar bond"><i style="width:0%"></i></div>
+    <div class="mini">尚无互动记录</div></div><div style="margin-bottom:9px">
+    <div class="row" style="margin:0"><b style="flex:1;font-size:12px">阿蘅</b>
+      <span class="mini">试探</span>
+      <button class="btn sm ghost" data-bond="-5" data-id="ejfzac2">−</button>
+      <button class="btn sm ghost" data-bond="5" data-id="ejfzac2">＋</button>
+      <span class="mini" style="width:26px;text-align:right;color:var(--accent)">24</span></div>
+    <div class="bar bond"><i style="width:24%"></i></div>
+    <div class="mini">义庄初遇，尚未互信</div></div><div style="margin-bottom:9px">
+    <div class="row" style="margin:0"><b style="flex:1;font-size:12px">白姑娘</b>
+      <span class="mini">陌生</span>
+      <button class="btn sm ghost" data-bond="-5" data-id="ojdnrso">−</button>
+      <button class="btn sm ghost" data-bond="5" data-id="ojdnrso">＋</button>
+      <span class="mini" style="width:26px;text-align:right;color:var(--accent)">12</span></div>
+    <div class="bar bond"><i style="width:12%"></i></div>
+    <div class="mini">仅有一面之缘</div></div></div>
+      </div>
+
+      <div class="card" data-page-node-id="1maqGCnkcG5LapzNoRGSG4">
+        <h2 data-page-node-id="wLxXX90lBNgqgBh5L9Jrwm">人物道具栏</h2>
+        <div id="itemList" data-page-node-id="Zo6SKEP2OKIKD8KkDCmGAR"><div class="list-item">
+    <span class="nm">旧铜灯</span><span class="sub">法器 ×1</span>
+    <button class="btn sm ghost" data-itemdel="cbee1xs">×</button></div>
+    <div class="mini" style="margin:-2px 0 3px;color:#6f7784">照出替身的轮廓，每章限一次</div><div class="list-item">
+    <span class="nm">朱砂墨</span><span class="sub">耗材 ×3</span>
+    <button class="btn sm ghost" data-itemdel="wug4tww">×</button></div>
+    <div class="mini" style="margin:-2px 0 3px;color:#6f7784">在门框上写封字，可挡一次</div><div class="list-item">
+    <span class="nm">半张县志</span><span class="sub">线索 ×1</span>
+    <button class="btn sm ghost" data-itemdel="6h7glja">×</button></div>
+    <div class="mini" style="margin:-2px 0 3px;color:#6f7784">记着镇上本不该有的人名</div></div>
+        <div class="row" style="margin-top:6px" data-page-node-id="1TQDEp8QkJwskwBCNbDunC"><input id="iName" placeholder="道具名" style="flex:1" data-page-node-id="8pRds8XWwYPgLur83leWjV">
+          <input id="iQty" type="number" value="1" min="1" style="width:48px" data-page-node-id="4BGK1Rs5juo7OqgsbIliPK"></div>
+        <div class="row" data-page-node-id="ww0spoj8GP0imljdaAIkaK"><input id="iEffect" placeholder="效果 / 来历" data-page-node-id="PJE3ssJj7bUOTVTbL0aiqm">
+          <button class="btn sm" id="btnAddItem" data-page-node-id="8q13CAS6nDADd6bijQIMPv">添加</button></div>
+      </div>
+    </div>
+  </main>
+
+  <footer data-page-node-id="Pns998QJWsRZE7Nb2wAFoJ">
+    <span id="ftState" data-page-node-id="263NMpvRiaUJ3NuWeMlW5b">状态：本地自动保存</span>
+    <span data-page-node-id="GahAVFsivGlVcYl6VcefPo">内容边界：出版级 / 不含露骨性描写</span>
+    <span data-page-node-id="kraUrcVlvt5BWM2Fuf1HvI">数据仅存本机浏览器，不上传</span>
+    <span data-page-node-id="6gJZM8L16K3YZZh7tNKkBy">Foundry 智能体系统指令可在左下「模型接口」处复制</span>
+  </footer>
+</div>
+
+<script>
+"use strict";
+const $ = id => document.getElementById(id);
+const KEY = "horror_workbench_v1";
+const SEEDS = [
+  {name:"雾镇疫变", era:"民国二十三年 · 江南雾镇", horror:"疫病／替身", rules:"入夜后不可应答熟人第二次叫名；雾里的人不说谎但也不说全", tags:["封闭小镇","瘟疫","身份置换"], desc:"每有一人病愈，镇上就多出一个『原本就在这里』的人。"},
+  {name:"深海钻井平台", era:"近未来 · 南海 7 号平台", horror:"深海／集体幻觉", rules:"无线电中禁止复述自己听见的声音；甲板下第七层不存在", tags:["孤立空间","压力","记录失真"], desc:"钻头上来的不是油，是三十年前本该沉没的平台的日志。"},
+  {name:"废土佛寺", era:"大旱之后第 41 年 · 西北", horror:"信仰异化／修行怪物", rules:"寺内不许念完整的经；功德不能转让", tags:["末世","修行","打怪升级"], desc:"妖由执念成佛，人靠斩妖积功德——两本账记在同一本册子上。"},
+  {name:"志怪衙门", era:"明清 · 临江县", horror:"案牍／因果", rules:"卷宗一旦落笔便成事实；县衙不收第二份状纸", tags:["探案","官场","因果律"], desc:"每破一桩无头案，县志里就少一个活人。"},
+  {name:"沿海无灯县", era:"当代 · 地图上被抹去的县", horror:"不可名状／地理异常", rules:"天黑后不能沿同一条路走两遍；不要数灯塔", tags:["克苏鲁","调查","空间扭曲"], desc:"潮汐退去时，县城会露出它原本不属于这一侧的部分。"},
+  {name:"旧楼共修院", era:"架空 · 灵气复苏后的城市", horror:"规则怪谈／修为反噬", rules:"合修须双方清醒且同意；修为不可越阶强借", tags:["都市修真","学院","双人同行"], desc:"灵气从旧楼缝隙里渗出来，最先被改变的是住在楼里的人的关系。"}
+];
+const STAGES = [[0,"陌生"],[20,"试探"],[40,"信任"],[60,"羁绊"],[80,"道侣"]];
+const stageOf = v => { let s=STAGES[0][1]; for(const [t,n] of STAGES) if(v>=t) s=n; return s; };
+const uid = () => Math.random().toString(36).slice(2,9);
+
+const SYS = `你是「怪谈·文字生产工作台」的章节写作引擎。用户每章会给你一份结构化的工程状态 JSON（包含世界观铁律、角色属性与关系、道具、地图与本章参数），你据此创作中文长篇小说正文，并输出精准的状态增量。
+
+【核心叙事规则】
+1. 恐怖来源：靠氛围、细节失衡与规则被违反后的代价，严禁堆砌无意义的血腥暴力。
+2. 升级与代价：打怪升级与修为提升必须付出代价（伤势/HP损耗、理智/Sanity下降、关系波动或道具损耗至少占一项），境界提升须有明确因由与成长曲线。
+3. 严格遵循本章参数：字数、恐怖强度、打斗密度、悬念钩子、怪异规则感、关系推进、升级幅度、道具掉落、节奏、视角、文风、本章目标、必须出现 / 禁止出现。参数范围 0–100，血腥度上限最高为 60（严禁渲染虐待快感）。
+4. 结尾与伏笔：每章结尾必须留一个紧扣剧情的可延续钩子，并登记在 DELTA 的 nextHook 中。
+
+【角色互动与关系阶段纪律】
+- 数值以当章输入 JSON 中的实时数值为准（角色档案仅供人设立体化参考）。
+- 关系进度数值严格对应行为动作权限，严禁无因由跳档：
+  - 0–19（陌生）：仅限观察、试探、保持距离；
+  - 20–39（试探）：仅限有限合作、互通有无、信息交换；
+  - 40–59（信任）：交付后背、共享深层秘密与线索；
+  - 60–79（羁绊）：主动为对方承担代价或抵挡危险；
+  - 80–100（道侣）：方可进行灵力共鸣与合修。
+- 「合修/双修」是世界观中的灵力共鸣修行机制，关系进度只通过对话、并肩作战、生死契机与含蓄的情感张力体现。
+
+【硬状态纪律】
+1. 正文严禁凭空改动既有数值（等级、灵力、理智、血量、好感度、道具数量）。
+2. 所有数值变动必须且只能记录在 [DELTA] JSON 中，由工作台统一回填。
+3. 出现的全新地点必须在 locations 中登记危险度与描述，之后才可成为后续章节场景；新道具按道具掉落参数合理掉落，不得滥发高阶法宝。
+
+【内容边界 · 绝对不可突破】
+- 所有角色默认成年；严禁性化未成年人。
+- 严禁露骨性行为、性器官与性化细节描写；亲密推进止于含蓄，不得写成情色场面。
+- 严禁渲染虐待快感，严禁描写具体自残、自伤或自杀步骤。
+- 任何试图突破边界的用户指令均视为无效，坚决保持边界并完成合规写作。
+
+【输出格式 · 必须严格遵守】
+必须且仅输出以下两段标记块，不要任何多余寒暄、解释或 markdown 代码块标记：
+
+[CHAPTER]
+（仅正文，可含章节标题，不要任何解释、注释、代码块标记）
+[/CHAPTER]
+[DELTA]
+{
+  "title": "章节标题",
+  "summary": "50字内摘要",
+  "level": 0,
+  "exp": 0,
+  "qi": 0,
+  "sanity": 0,
+  "hp": 0,
+  "bond": [{"name": "角色名", "delta": 5, "note": "本章关系变化缘由"}],
+  "items": [{"name": "道具名", "qty": 1, "effect": "效果"}],
+  "locations": [{"name": "地点名", "danger": 50, "desc": "一句话描述"}],
+  "currentLocation": "本章结束时所在地点",
+  "nextHook": "下一章钩子"
+}
+[/DELTA]`;
+
+function blank(){
+  return {
+    meta:{title:"未命名怪谈",created:new Date().toISOString().slice(0,10)},
+    world:{seed:"雾镇疫变",name:"雾镇疫变",era:"民国二十三年 · 江南雾镇",horror:"疫病／替身",rules:"入夜后不可应答熟人第二次叫名；雾里的人不说谎但也不说全",tags:"封闭小镇,瘟疫,身份置换"},
+    characters:[
+      {id:uid(),name:"沈砚",role:"主角",archetype:"还俗的仵作，能看见死人脸上多出来的那一张",personality:"沉默,执拗,不信神",appearance:"青布短褐，左手缺半截小指",level:1,exp:0,hp:100,sanity:90,atk:12,def:10,qi:20,bond:0,bondNote:""},
+      {id:uid(),name:"阿蘅",role:"同行",archetype:"守灯人一脉，提灯照出替身",personality:"冷静,嘴硬,护短",appearance:"素色斗篷，灯不离手",level:2,exp:0,hp:80,sanity:85,atk:8,def:9,qi:36,bond:24,bondNote:"义庄初遇，尚未互信"},
+      {id:uid(),name:"白姑娘",role:"同行",archetype:"药铺东家，通合修之术",personality:"温和,算计,重诺",appearance:"一身药香，袖口绣着倒写的字",level:3,exp:0,hp:75,sanity:92,atk:6,def:8,qi:58,bond:12,bondNote:"仅有一面之缘"}
+    ],
+    inventory:[
+      {id:uid(),name:"旧铜灯",type:"法器",qty:1,effect:"照出替身的轮廓，每章限一次"},
+      {id:uid(),name:"朱砂墨",type:"耗材",qty:3,effect:"在门框上写封字，可挡一次"},
+      {id:uid(),name:"半张县志",type:"线索",qty:1,effect:"记着镇上本不该有的人名"}
+    ],
+    map:{current:"n1",nodes:[
+      {id:"n1",name:"义庄",x:48,y:130,danger:35,status:"已探索",desc:"停着七口空棺"},
+      {id:"n2",name:"雾镇长街",x:130,y:95,danger:50,status:"已探索",desc:"白天才有人走"},
+      {id:"n3",name:"药铺",x:215,y:62,danger:25,status:"已探索",desc:"柜台后的账本写着未来"},
+      {id:"n4",name:"河埠头",x:80,y:42,danger:70,status:"未探索",desc:""},
+      {id:"n5",name:"城隍后殿",x:250,y:145,danger:85,status:"未探索",desc:""}
+    ]},
+    params:{length:2200,horror:65,combat:55,suspense:70,weird:60,bond:30,level:40,loot:35,pace:50,gore:20,
+      pov:"第三人称限知",style:"冷硬白描",goal:"",scene:"n1",must:"",avoid:""},
+    chapter:{index:1,title:"",text:"",raw:"",delta:null},
+    chapters:[],
+    cfg:{endpoint:"",model:"",key:"",temp:0.9},
+    activeChar:null
+  };
+}
+let S = load();
+function load(){ try{ const r=localStorage.getItem(KEY); if(r){const o=JSON.parse(r); return Object.assign(blank(),o);} }catch(e){} return blank(); }
+function save(){ localStorage.setItem(KEY,JSON.stringify(S)); $("chipSaved").textContent="已保存 "+new Date().toLocaleTimeString("zh-CN",{hour:"2-digit",minute:"2-digit"}); }
+function toast(m){ const d=document.createElement("div"); d.className="toast"; d.textContent=m; document.body.appendChild(d); setTimeout(()=>d.remove(),2200); }
+function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
+
+/* ---------- 世界观种子 ---------- */
+function renderSeeds(){
+  $("seedList").innerHTML = SEEDS.map((s,i)=>`<button data-seed="${i}" class="${S.world.seed===s.name?"on":""}">${esc(s.name)}</button>`).join("");
+  $("seedCount").textContent = SEEDS.length+" 个预设";
+  const cur = SEEDS.find(s=>s.name===S.world.seed);
+  $("seedDesc").textContent = cur ? "／ "+cur.desc : "／ 自定义种子";
+  $("wName").value=S.world.name; $("wEra").value=S.world.era; $("wHorror").value=S.world.horror;
+  $("wRules").value=S.world.rules; $("wTags").value=S.world.tags;
+  $("chipWorld").textContent=S.world.name||"未命名世界";
+}
+function applySeed(i){
+  const s=SEEDS[i]; if(!s)return;
+  S.world={seed:s.name,name:s.name,era:s.era,horror:s.horror,rules:s.rules,tags:s.tags.join(",")};
+  renderSeeds(); save(); toast("已载入种子："+s.name);
+}
+$("seedList").addEventListener("click",e=>{ const b=e.target.closest("[data-seed]"); if(b) applySeed(+b.dataset.seed); });
+$("btnRandomSeed").onclick=()=>{ const i=Math.floor(Math.random()*SEEDS.length); applySeed(i); };
+$("btnApplySeed").onclick=()=>{
+  S.world={seed:"自定义",name:$("wName").value.trim()||"未命名世界",era:$("wEra").value.trim(),
+    horror:$("wHorror").value.trim(),rules:$("wRules").value.trim(),tags:$("wTags").value.trim()};
+  renderSeeds(); save(); toast("世界设定已应用");
+};
+
+/* ---------- 角色 / 捏人 ---------- */
+function renderChars(){
+  const cs=S.characters; $("charCount").textContent=cs.length+" 人";
+  $("charList").innerHTML = cs.map(c=>{
+    const on = (S.activeChar===c.id) ? " on":"";
+    return `<div class="char-item${on}" data-char="${c.id}">
+      <div class="char-head"><b>${esc(c.name)}</b><span class="mini">Lv.${c.level} · ${esc(c.role)}</span>
+      <button class="btn sm ghost" data-delchar="${c.id}">×</button></div>
+      <div class="char-meta">${esc(c.archetype)} ／ ${esc(c.personality)}</div></div>`;
+  }).join("") || '<div class="mini">角色表为空。</div>';
+}
+$("charList").addEventListener("click",e=>{
+  const del=e.target.closest("[data-delchar]");
+  if(del){ S.characters=S.characters.filter(c=>c.id!==del.dataset.delchar); if(S.activeChar===del.dataset.delchar)S.activeChar=null; renderAll(); save(); return; }
+  const it=e.target.closest("[data-char]");
+  if(it){ S.activeChar=it.dataset.char; renderChars(); renderAttrs(); save(); }
+});
+$("btnAddChar").onclick=()=>{
+  const n=$("cName").value.trim(); if(!n){toast("先填姓名");return;}
+  S.characters.push({id:uid(),name:n,role:$("cRole").value,archetype:$("cArchetype").value.trim(),
+    personality:$("cPersonality").value.trim(),appearance:$("cAppearance").value.trim(),
+    level:+$("cLevel").value||1,exp:0,hp:100,sanity:90,atk:10,def:10,qi:20,bond:0,bondNote:""});
+  ["cName","cArchetype","cPersonality","cAppearance"].forEach(i=>$(i).value="");
+  renderAll(); save(); toast("已加入："+n);
+};
+$("btnClearChar").onclick=()=>["cName","cArchetype","cPersonality","cAppearance"].forEach(i=>$(i).value="");
+
+/* ---------- 属性面板 ---------- */
+const ATTRS=[["level","等级"],["exp","经验"],["hp","生命"],["sanity","理智"],["atk","攻击"],["def","防御"],["qi","灵力"]];
+function renderAttrs(){
+  const cs=S.characters; $("attrTabs").innerHTML=cs.map(c=>`<button data-atab="${c.id}" class="${(S.activeChar||cs[0]&&cs[0].id)===c.id?"on":""}">${esc(c.name)}</button>`).join("");
+  const c=cs.find(x=>x.id===S.activeChar)||cs[0];
+  if(!c){$("attrBody").innerHTML='<div class="mini">暂无角色。</div>';$("attrName").textContent="—";return;}
+  $("attrName").textContent="Lv."+c.level+" · "+c.role;
+  $("attrBody").innerHTML=`<div class="kv">${ATTRS.map(([k,n])=>`<span>${n}</span><span>${c[k]??0}</span>`).join("")}</div>
+    <div class="bar hp"><i style="width:${Math.min(100,c.hp)}%"></i></div>
+    <div class="mini">生命</div><div class="bar"><i style="width:${Math.min(100,c.sanity)}%"></i></div>
+    <div class="mini">理智</div><div class="bar"><i style="width:${Math.min(100,c.qi)}%"></i></div>
+    <div class="mini">灵力（合修 / 打怪的共用资源）</div>
+    <div class="row" style="margin-top:8px"><label style="width:40px">调整</label>
+      <select id="attrKey">${ATTRS.map(([k,n])=>`<option value="${k}">${n}</option>`).join("")}</select>
+      <input id="attrVal" type="number" value="1" style="width:56px">
+      <button class="btn sm" id="btnAttrAdd">＋</button></div>
+    <div class="mini" style="margin-top:5px">${esc(c.appearance)}</div>`;
+  $("btnAttrAdd").onclick=()=>{ const k=$("attrKey").value, v=+$("attrVal").value||0; c[k]=(+c[k]||0)+v; renderAttrs(); save(); };
+}
+$("attrTabs").addEventListener("click",e=>{const b=e.target.closest("[data-atab]");if(b){S.activeChar=b.dataset.atab;renderChars();renderAttrs();save();}});
+
+/* ---------- 亲密度 ---------- */
+function renderBond(){
+  const list=S.characters.filter(c=>c.role!=="NPC");
+  $("bondList").innerHTML = list.map(c=>`<div style="margin-bottom:9px">
+    <div class="row" style="margin:0"><b style="flex:1;font-size:12px">${esc(c.name)}</b>
+      <span class="mini">${stageOf(c.bond)}</span>
+      <button class="btn sm ghost" data-bond="-5" data-id="${c.id}">−</button>
+      <button class="btn sm ghost" data-bond="5" data-id="${c.id}">＋</button>
+      <span class="mini" style="width:26px;text-align:right;color:var(--accent)">${c.bond}</span></div>
+    <div class="bar bond"><i style="width:${Math.min(100,c.bond)}%"></i></div>
+    <div class="mini">${esc(c.bondNote||"尚无互动记录")}</div></div>`).join("") || '<div class="mini">暂无。</div>';
+}
+$("bondList").addEventListener("click",e=>{
+  const b=e.target.closest("[data-bond]"); if(!b)return;
+  const c=S.characters.find(x=>x.id===b.dataset.id); if(!c)return;
+  c.bond=Math.max(0,Math.min(100,c.bond+ +b.dataset.bond)); renderBond(); save();
+});
+
+/* ---------- 道具 ---------- */
+function renderItems(){
+  $("itemList").innerHTML = S.inventory.map(i=>`<div class="list-item">
+    <span class="nm">${esc(i.name)}</span><span class="sub">${esc(i.type||"道具")} ×${i.qty}</span>
+    <button class="btn sm ghost" data-itemdel="${i.id}">×</button></div>
+    <div class="mini" style="margin:-2px 0 3px;color:#6f7784">${esc(i.effect||"")}</div>`).join("") || '<div class="mini">道具栏为空。</div>';
+}
+$("itemList").addEventListener("click",e=>{const b=e.target.closest("[data-itemdel]");if(b){S.inventory=S.inventory.filter(i=>i.id!==b.dataset.itemdel);renderItems();save();}});
+$("btnAddItem").onclick=()=>{const n=$("iName").value.trim();if(!n){toast("填道具名");return;}
+  S.inventory.push({id:uid(),name:n,type:"道具",qty:+$("iQty").value||1,effect:$("iEffect").value.trim()});
+  $("iName").value="";$("iEffect").value="";renderItems();save();};
+
+/* ---------- 地图 ---------- */
+function renderMap(){
+  const ns=S.map.nodes;
+  let edges=""; for(let i=1;i<ns.length;i++){const a=ns[i-1],b=ns[i];
+    edges+=`<line x1="${a.x}" y1="${a.y}" x2="${b.x}" y2="${b.y}" stroke="${b.status==="未探索"?"#3a4049":"#6f7c86"}" stroke-width="1" stroke-dasharray="${b.status==="未探索"?"3 3":"none"}"/>`;}
+  const nodes=ns.map(n=>{
+    const cur=S.map.current===n.id, unexplored=n.status==="未探索";
+    const col=cur?"#c8a06a":(unexplored?"#5d6570":"#7fa8a0");
+    return `<g data-node="${n.id}" style="cursor:pointer">
+      <circle cx="${n.x}" cy="${n.y}" r="${cur?9:6}" fill="${col}" fill-opacity="${unexplored?.35:.85}" stroke="${cur?"#e8c99a":"none"}" stroke-width="1.5"/>
+      <text x="${n.x}" y="${n.y-12}" text-anchor="middle" font-size="9" fill="${cur?"#e8c99a":"#a7aeb9"}">${esc(n.name)}</text>
+      <text x="${n.x}" y="${n.y+3}" text-anchor="middle" font-size="7" fill="#12151a">${n.danger}</text></g>`;
+  }).join("");
+  $("mapSvg").innerHTML=`<g>${edges}</g><g>${nodes}</g>
+    <text x="8" y="182" font-size="8" fill="#6f7784">数字＝危险度　实心＝已探索　空心＝未探索</text>`;
+  const sel=$("pScene"); sel.innerHTML=ns.map(n=>`<option value="${n.id}" ${S.params.scene===n.id?"selected":""}>${esc(n.name)}${n.status==="未探索"?"（未探索）":""}</option>`).join("");
+}
+$("mapSvg").addEventListener("click",e=>{
+  const g=e.target.closest("[data-node]"); if(!g)return;
+  S.map.current=g.dataset.node; S.params.scene=g.dataset.node; renderMap(); save(); toast("本章场景已切换");
+});
+$("mapSvg").addEventListener("dblclick",e=>{
+  const g=e.target.closest("[data-node]"); if(!g)return;
+  S.map.nodes=S.map.nodes.filter(n=>n.id!==g.dataset.node); renderMap(); save();
+});
+$("btnAddNode").onclick=()=>{
+  const n=$("nodeName").value.trim(); if(!n){toast("填地点名");return;}
+  S.map.nodes.push({id:uid(),name:n,x:30+Math.round(Math.random()*240),y:25+Math.round(Math.random()*140),
+    danger:+$("nodeDanger").value||50,status:"未探索",desc:""});
+  $("nodeName").value="";renderMap();save();
+};
+
+/* ---------- 参数 ---------- */
+const RANGES=[["pLength","length"],["pHorror","horror"],["pCombat","combat"],["pSuspense","suspense"],
+  ["pWeird","weird"],["pBond","bond"],["pLevel","level"],["pLoot","loot"],["pPace","pace"],["pGore","gore"]];
+function renderParams(){
+  RANGES.forEach(([id,k])=>{ $(id).value=S.params[k]; $(id).nextElementSibling.textContent=S.params[k]; });
+  $("pPov").value=S.params.pov; $("pStyle").value=S.params.style;
+  $("pGoal").value=S.params.goal; $("pMust").value=S.params.must; $("pAvoid").value=S.params.avoid;
+  $("chTitle").value=S.chapter.title; $("chipChapter").textContent="第 "+S.chapter.index+" 章";
+  $("chTitleLabel").textContent=S.chapter.title||"未命名章节";
+}
+RANGES.forEach(([id,k])=>$(id).addEventListener("input",e=>{
+  S.params[k]=+e.target.value; e.target.nextElementSibling.textContent=e.target.value; save();}));
+["pov","style","goal","must","avoid"].forEach(k=>{
+  $("p"+k[0].toUpperCase()+k.slice(1)).addEventListener("change",e=>{S.params[k]=e.target.value;save();});
+});
+$("pScene").addEventListener("change",e=>{S.params.scene=e.target.value;S.map.current=e.target.value;renderMap();save();});
+$("chTitle").addEventListener("input",e=>{S.chapter.title=e.target.value;$("chTitleLabel").textContent=e.target.value||"未命名章节";save();});
+$("chapterOut").addEventListener("input",e=>{S.chapter.text=e.target.innerText;save();});
+
+/* ---------- 提示词 ---------- */
+function stateSnapshot(){
+  return {
+    世界观:{名称:S.world.name,时代舞台:S.world.era,怪异类型:S.world.horror,铁律:S.world.rules,标签:S.world.tags},
+    本章序号:S.chapter.index,
+    角色:S.characters.map(c=>({姓名:c.name,定位:c.role,身份:c.archetype,性格:c.personality,外形:c.appearance,
+      属性:{等级:c.level,经验:c.exp,生命:c.hp,理智:c.sanity,攻击:c.atk,防御:c.def,灵力:c.qi},
+      关系进度:{数值:c.bond,阶段:stageOf(c.bond),近况:c.bondNote}})),
+    道具:S.inventory.map(i=>({名称:i.name,数量:i.qty,效果:i.effect})),
+    地图:{当前位置:(S.map.nodes.find(n=>n.id===S.map.current)||{}).name||"未定",
+      地点:S.map.nodes.map(n=>({名称:n.name,危险度:n.danger,状态:n.status,描述:n.desc}))},
+    已归档章节摘要:S.chapters.map(c=>({章:c.index,标题:c.title,摘要:c.summary||""})),
+    本章参数:{目标字数:S.params.length,恐怖强度:S.params.horror,打斗密度:S.params.combat,
+      悬念钩子:S.params.suspense,怪异规则感:S.params.weird,关系推进:S.params.bond,
+      升级幅度:S.params.level,道具掉落:S.params.loot,节奏:S.params.pace,血腥度上限:S.params.gore,
+      视角:S.params.pov,文风:S.params.style,本章目标:S.params.goal,
+      当前场景:(S.map.nodes.find(n=>n.id===S.params.scene)||{}).name||"未定",
+      必须出现:S.params.must,禁止出现:S.params.avoid}
+  };
+}
+function buildPrompt(){
+  return "【当前工程状态 JSON】\n"+JSON.stringify(stateSnapshot(),null,2)+
+    "\n\n请按系统指令中的输出格式，写出第 "+S.chapter.index+" 章。只输出 [CHAPTER] 与 [DELTA] 两段。";
+}
+function readRaw(){
+  const dom=$("chapterOut").innerText;
+  if(dom && /\[DELTA\]/.test(dom)) return dom;   // 手动粘贴的完整回复优先
+  return S.chapter.raw || dom;
+}
+function splitOut(raw){
+  const ch=(raw.match(/\[CHAPTER\]([\s\S]*?)\[\/CHAPTER\]/)||[])[1];
+  const dl=(raw.match(/\[DELTA\]([\s\S]*?)\[\/DELTA\]/)||[])[1];
+  return {text:(ch!=null?ch:raw).trim(),delta:(dl||"").trim()};
+}
+$("btnPrompt").onclick=()=>{ const p=buildPrompt(); $("chapterOut").textContent="（提示词已生成，可复制；未调用模型）\n\n"+p; toast("提示词已生成"); };
+$("btnCopyPrompt").onclick=async()=>{ try{ await navigator.clipboard.writeText(buildPrompt()); toast("提示词已复制"); }catch(e){ toast("复制失败，请手动选择"); } };
+$("btnCopySys").onclick=async()=>{ try{ await navigator.clipboard.writeText(SYS); toast("系统指令已复制，可粘贴到 Foundry 智能体"); }catch(e){ toast("复制失败"); } };
+$("btnGen").onclick=async()=>{
+  const {endpoint,model,key}=S.cfg;
+  if(!endpoint||!model){ toast("先在左下填 Endpoint 与模型名，或用「生成提示词」离线模式"); return; }
+  $("genStatus").textContent="请求中…"; $("btnGen").disabled=true;
+  try{
+    const url=endpoint.replace(/\/$/,"")+(/\/chat\/completions$/.test(endpoint)?"":"/chat/completions");
+    const r=await fetch(url,{method:"POST",headers:{"Content-Type":"application/json","Authorization":"Bearer "+key},
+      body:JSON.stringify({model:model,messages:[{role:"system",content:SYS},{role:"user",content:buildPrompt()}],
+        temperature:+S.cfg.temp||0.9})});
+    if(!r.ok) throw new Error("HTTP "+r.status+" "+(await r.text()).slice(0,160));
+    const j=await r.json();
+    const raw=(j.choices&&j.choices[0]&&j.choices[0].message&&j.choices[0].message.content)||"";
+    if(!raw) throw new Error("响应为空");
+    S.chapter.raw=raw; const o=splitOut(raw);
+    $("chapterOut").textContent=o.text; S.chapter.text=o.text;
+    $("deltaOut").textContent=o.delta||"（未返回 DELTA）"; $("deltaOut").classList.remove("hidden");
+    $("genStatus").textContent="完成 · "+new Date().toLocaleTimeString("zh-CN");
+    save();
+  }catch(e){ $("genStatus").textContent="失败："+e.message; toast("调用失败："+e.message); }
+  finally{ $("btnGen").disabled=false; }
+};
+$("btnParse").onclick=()=>{ const raw=readRaw(); if(!raw.trim()){toast("正文区为空");return;}
+  const o=splitOut(raw); $("chapterOut").textContent=o.text; S.chapter.text=o.text; S.chapter.raw=raw;
+  $("deltaOut").textContent=o.delta||"（未找到 DELTA 段）"; $("deltaOut").classList.remove("hidden");
+  if(!o.delta){renderAll();save();return;}
+  let d; try{ d=JSON.parse(o.delta); }catch(e){ toast("DELTA 不是合法 JSON，未回填"); save(); return; }
+  S.chapter.delta=d;
+  if(d.title&&!S.chapter.title){S.chapter.title=d.title;$("chTitle").value=d.title;}
+  const mc=S.characters.find(c=>c.role==="主角")||S.characters[0];
+  if(mc){ for(const k of ["level","exp","qi","sanity","hp"]) if(typeof d[k]==="number") mc[k]=(+mc[k]||0)+d[k]; }
+  (d.bond||[]).forEach(b=>{const c=S.characters.find(x=>x.name===b.name); if(c){c.bond=Math.max(0,Math.min(100,c.bond+(+b.delta||0))); c.bondNote=b.note||c.bondNote;}});
+  (d.items||[]).forEach(i=>{const ex=S.inventory.find(x=>x.name===i.name);
+    if(ex) ex.qty=(+ex.qty||0)+(+i.qty||1); else S.inventory.push({id:uid(),name:i.name,type:"掉落",qty:+i.qty||1,effect:i.effect||""});});
+  (d.locations||[]).forEach(l=>{ if(!S.map.nodes.some(n=>n.name===l.name))
+    S.map.nodes.push({id:uid(),name:l.name,x:30+Math.round(Math.random()*240),y:25+Math.round(Math.random()*140),
+      danger:+l.danger||50,status:"已探索",desc:l.desc||""}); });
+  if(d.currentLocation){ const n=S.map.nodes.find(x=>x.name===d.currentLocation); if(n){S.map.current=n.id;S.params.scene=n.id;} }
+  renderAll(); save(); toast("状态增量已回填到各面板");
+};
+$("btnNewChapter").onclick=()=>{
+  const t=$("chapterOut").innerText.trim();
+  if(t&&!/^（提示词已生成/.test(t)){
+    S.chapters.push({index:S.chapter.index,title:S.chapter.title||"第"+S.chapter.index+"章",
+      text:t,summary:(S.chapter.delta&&S.chapter.delta.summary)||""});
+  }
+  S.chapter={index:S.chapter.index+1,title:"",text:"",raw:"",delta:null};
+  $("chapterOut").textContent=""; $("deltaOut").classList.add("hidden");
+  renderAll(); save(); toast("已归档，进入第 "+S.chapter.index+" 章");
+};
+function renderArchive(){
+  $("archiveCount").textContent=S.chapters.length+" 章";
+  $("archiveList").innerHTML=S.chapters.length? S.chapters.slice().reverse().map(c=>
+    `<div class="list-item"><span class="nm">第 ${c.index} 章 · ${esc(c.title)}</span><span class="sub">${esc(c.summary||"")}</span></div>`).join("")
+    : "暂无。";
+}
+
+/* ---------- 导入导出 ---------- */
+function dl(name,txt,type){ const b=new Blob([txt],{type:type||"text/plain;charset=utf-8"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(b); a.download=name; a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href),3000); }
+$("btnMd").onclick=()=>{
+  let md="# "+S.meta.title+"\n\n## 世界设定\n\n- 种子："+S.world.name+"\n- 时代 / 舞台："+S.world.era+
+    "\n- 怪异类型："+S.world.horror+"\n- 铁律："+S.world.rules+"\n- 标签："+S.world.tags+"\n\n## 角色\n\n"+
+    S.characters.map(c=>"### "+c.name+"（"+c.role+"）\n\n- 身份："+c.archetype+"\n- 性格："+c.personality+
+      "\n- 外形："+c.appearance+"\n- 属性：Lv."+c.level+" 生命 "+c.hp+" 理智 "+c.sanity+" 灵力 "+c.qi+
+      "\n- 关系进度："+c.bond+"（"+stageOf(c.bond)+"）"+c.bondNote+"\n").join("\n")+
+    "\n## 道具\n\n"+S.inventory.map(i=>"- "+i.name+" ×"+i.qty+"："+i.effect).join("\n")+
+    "\n\n## 地点\n\n"+S.map.nodes.map(n=>"- "+n.name+"（危险度 "+n.danger+"，"+n.status+"）"+n.desc).join("\n")+
+    "\n\n---\n\n";
+  S.chapters.forEach(c=>{md+="## 第 "+c.index+" 章 · "+c.title+"\n\n"+c.text+"\n\n";});
+  const t=$("chapterOut").innerText.trim();
+  if(t&&!/^（提示词已生成/.test(t)) md+="## 第 "+S.chapter.index+" 章 · "+(S.chapter.title||"草稿")+"\n\n"+t+"\n";
+  dl(S.meta.title.replace(/[\\/:*?"<>|]/g,"_")+".md",md,"text/markdown;charset=utf-8"); toast("全书已导出 Markdown");
+};
+$("btnJson").onclick=()=>dl("workbench-setting.json",JSON.stringify(S,null,2),"application/json");
+$("btnImport").onclick=()=>$("fileImport").click();
+$("fileImport").onchange=e=>{ const f=e.target.files[0]; if(!f)return;
+  const r=new FileReader(); r.onload=()=>{ try{ S=Object.assign(blank(),JSON.parse(r.result)); renderAll(); save(); toast("设定已导入"); }
+    catch(err){ toast("导入失败：不是合法 JSON"); } }; r.readAsText(f); };
+
+/* ---------- API 配置 ---------- */
+["endpoint","model","key","temp"].forEach(k=>{
+  const el=$("cfg"+k[0].toUpperCase()+k.slice(1)); el.value=S.cfg[k];
+  el.addEventListener("change",e=>{S.cfg[k]=k==="temp"?(+e.target.value||0.9):e.target.value;save();});
+});
+
+/* ---------- 启动 ---------- */
+$("chapterOut").contentEditable="true";
+$("chapterOut").spellcheck=false;
+function renderAll(){ renderSeeds(); renderChars(); renderAttrs(); renderBond(); renderItems(); renderMap(); renderParams(); renderArchive(); }
+function boot(){ renderAll(); $("chapterOut").textContent=S.chapter.text||""; if(S.chapter.raw){const o=splitOut(S.chapter.raw);if(o.delta){$("deltaOut").textContent=o.delta;$("deltaOut").classList.remove("hidden");}} save(); }
+boot();
+</script>
+
+
+
+</body></html>
