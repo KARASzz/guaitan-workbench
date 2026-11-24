@@ -171,11 +171,12 @@ def sync_local_docs_to_wiki(engine: Engine):
 
                 conn.execute(text("""
                 INSERT INTO wiki_pages (path, title, category, type, tags, summary, content, sha256, line_count, updated_at)
-                VALUES (:path, :title, :category, :type, :tags::JSONB, :summary, :content, :sha256, :line_count, CURRENT_TIMESTAMP)
+                VALUES (:path, :title, :category, :type, CAST(:tags AS JSONB), :summary, :content, :sha256, :line_count, CURRENT_TIMESTAMP)
                 ON CONFLICT (path) DO UPDATE SET
                     title = EXCLUDED.title,
                     category = EXCLUDED.category,
                     type = EXCLUDED.type,
+                    tags = EXCLUDED.tags,
                     summary = EXCLUDED.summary,
                     content = EXCLUDED.content,
                     sha256 = EXCLUDED.sha256,
@@ -301,7 +302,7 @@ def save_project_state(payload: Dict[str, Any] = Body(...), project_id: str = "d
             # 1. 存储至专用状态表
             conn.execute(text("""
             INSERT INTO guaitan_state (project_id, state_data, updated_at)
-            VALUES (:pid, :state::JSONB, CURRENT_TIMESTAMP)
+            VALUES (:pid, CAST(:state AS JSONB), CURRENT_TIMESTAMP)
             ON CONFLICT (project_id) DO UPDATE SET
                 state_data = EXCLUDED.state_data,
                 updated_at = CURRENT_TIMESTAMP;
@@ -310,9 +311,11 @@ def save_project_state(payload: Dict[str, Any] = Body(...), project_id: str = "d
             # 2. 存入个人 Wiki 独立分支下的工程快照
             conn.execute(text("""
             INSERT INTO wiki_pages (path, title, category, type, tags, summary, content, sha256, line_count, updated_at)
-            VALUES (:path, :title, :category, 'project_state', :tags::JSONB, :summary, :content, :sha, :lines, CURRENT_TIMESTAMP)
+            VALUES (:path, :title, :category, 'project_state', CAST(:tags AS JSONB), :summary, :content, :sha, :lines, CURRENT_TIMESTAMP)
             ON CONFLICT (path) DO UPDATE SET
                 title = EXCLUDED.title,
+                category = EXCLUDED.category,
+                tags = EXCLUDED.tags,
                 summary = EXCLUDED.summary,
                 content = EXCLUDED.content,
                 sha256 = EXCLUDED.sha256,
@@ -343,7 +346,7 @@ def save_project_state(payload: Dict[str, Any] = Body(...), project_id: str = "d
                 # 插入章节表
                 conn.execute(text("""
                 INSERT INTO guaitan_chapters (project_id, chapter_index, title, summary, content, delta, updated_at)
-                VALUES (:pid, :c_idx, :title, :summary, :content, :delta::JSONB, CURRENT_TIMESTAMP)
+                VALUES (:pid, :c_idx, :title, :summary, :content, CAST(:delta AS JSONB), CURRENT_TIMESTAMP)
                 ON CONFLICT (project_id, chapter_index) DO UPDATE SET
                     title = EXCLUDED.title,
                     summary = EXCLUDED.summary,
@@ -362,9 +365,11 @@ def save_project_state(payload: Dict[str, Any] = Body(...), project_id: str = "d
                 # 同步至个人 Wiki 页面
                 conn.execute(text("""
                 INSERT INTO wiki_pages (path, title, category, type, tags, summary, content, sha256, line_count, updated_at)
-                VALUES (:path, :title, :category, 'chapter', :tags::JSONB, :summary, :content, :sha, :lines, CURRENT_TIMESTAMP)
+                VALUES (:path, :title, :category, 'chapter', CAST(:tags AS JSONB), :summary, :content, :sha, :lines, CURRENT_TIMESTAMP)
                 ON CONFLICT (path) DO UPDATE SET
                     title = EXCLUDED.title,
+                    category = EXCLUDED.category,
+                    tags = EXCLUDED.tags,
                     summary = EXCLUDED.summary,
                     content = EXCLUDED.content,
                     sha256 = EXCLUDED.sha256,
@@ -414,6 +419,15 @@ def list_wiki_pages():
             return {"pages": pages, "total": len(pages)}
     except Exception as e:
         return {"error": str(e), "pages": []}
+
+
+@app.post("/api/wiki/sync_corpus")
+def trigger_sync_corpus():
+    engine = get_db_engine()
+    if not engine:
+        raise HTTPException(status_code=500, detail="未连接数据库")
+    sync_local_docs_to_wiki(engine)
+    return {"status": "success", "message": "设定集与规程已同步至 wiki_pages (guaitan/rules/)"}
 
 
 if __name__ == "__main__":
