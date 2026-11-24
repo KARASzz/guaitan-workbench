@@ -103,6 +103,8 @@
     <span class="chip" id="chipChapter" data-page-node-id="U9wrTSrBq0BQpeDW9LMDth">第 1 章</span>
     <span class="chip" id="chipWorld" data-page-node-id="abTckAgR8EwMRK5nxb6aV0">雾镇疫变</span>
     <span class="chip" id="chipSaved" data-page-node-id="dFxOrQus9E43eeQQtGGMpD">已保存</span>
+    <span class="chip" id="chipCloudSql" style="border-color:#3b5249;color:#7fa8a0">Cloud SQL: 检测中</span>
+    <button class="btn sm ghost" id="btnSyncCloud" title="强制将当前状态与 Cloud SQL 双向同步">云端同步</button>
     <div class="sp" data-page-node-id="nibk9GNWvkQWul8oUPgDEn"></div>
     <button class="btn" id="btnPrompt" data-page-node-id="UWqNMpjASktABsgrRAbWgt">生成提示词</button>
     <button class="btn primary" id="btnGen" data-page-node-id="JGRb7Icsg28fbODJ4VtfD6">调用模型写本章</button>
@@ -413,7 +415,7 @@ function blank(){
 }
 let S = load();
 function load(){ try{ const r=localStorage.getItem(KEY); if(r){const o=JSON.parse(r); return Object.assign(blank(),o);} }catch(e){} return blank(); }
-function save(){ localStorage.setItem(KEY,JSON.stringify(S)); $("chipSaved").textContent="已保存 "+new Date().toLocaleTimeString("zh-CN",{hour:"2-digit",minute:"2-digit"}); }
+function save(){ localStorage.setItem(KEY,JSON.stringify(S)); $("chipSaved").textContent="已保存 "+new Date().toLocaleTimeString("zh-CN",{hour:"2-digit",minute:"2-digit"}); if(typeof syncToCloud==="function") syncToCloud(false); }
 function toast(m){ const d=document.createElement("div"); d.className="toast"; d.textContent=m; document.body.appendChild(d); setTimeout(()=>d.remove(),2200); }
 function esc(s){ return String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c])); }
 
@@ -692,11 +694,73 @@ $("fileImport").onchange=e=>{ const f=e.target.files[0]; if(!f)return;
   el.addEventListener("change",e=>{S.cfg[k]=k==="temp"?(+e.target.value||0.9):e.target.value;save();});
 });
 
+/* ---------- Cloud SQL 个人 Wiki 分支双向同步 ---------- */
+let isSyncing = false;
+let syncTimer = null;
+async function syncToCloud(notify=false){
+  if(syncTimer) clearTimeout(syncTimer);
+  syncTimer = setTimeout(async()=>{
+    if(isSyncing) return;
+    try{
+      isSyncing = true;
+      const res = await fetch("/api/state", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(S)
+      });
+      if(res.ok){
+        const data = await res.json();
+        if(data.status === "success"){
+          $("chipCloudSql").textContent = "Cloud SQL: 已同步 Wiki 分支";
+          $("chipCloudSql").style.borderColor = "#4a7c59";
+          $("chipCloudSql").style.color = "#83a985";
+          if(notify) toast("已同步至 Cloud SQL 个人 Wiki 分支");
+        }
+      }
+    }catch(err){
+      $("chipCloudSql").textContent = "Cloud SQL: 离线缓存";
+      $("chipCloudSql").style.borderColor = "#444";
+      $("chipCloudSql").style.color = "#888";
+    }finally{
+      isSyncing = false;
+    }
+  }, notify ? 0 : 600);
+}
+
+async function initCloudSql(){
+  try{
+    const stRes = await fetch("/api/db/status");
+    if(!stRes.ok) throw new Error("offline");
+    const stData = await stRes.json();
+    if(stData.connected){
+      $("chipCloudSql").textContent = "Cloud SQL: super-roach-db ("+stData.guaitan_wiki_pages+"篇)";
+      $("chipCloudSql").style.borderColor = "#4a7c59";
+      $("chipCloudSql").style.color = "#83a985";
+      
+      const stateRes = await fetch("/api/state");
+      if(stateRes.ok){
+        const sData = await stateRes.json();
+        if(sData.status === "success" && sData.data){
+          S = Object.assign(blank(), sData.data);
+          renderAll();
+          $("chapterOut").textContent = S.chapter.text || "";
+          toast("已从 Cloud SQL 个人 Wiki 载入工程状态");
+        }
+      }
+    } else {
+      $("chipCloudSql").textContent = "Cloud SQL: 离线";
+    }
+  }catch(e){
+    $("chipCloudSql").textContent = "本地模式";
+  }
+}
+$("btnSyncCloud").onclick = () => syncToCloud(true);
+
 /* ---------- 启动 ---------- */
 $("chapterOut").contentEditable="true";
 $("chapterOut").spellcheck=false;
 function renderAll(){ renderSeeds(); renderChars(); renderAttrs(); renderBond(); renderItems(); renderMap(); renderParams(); renderArchive(); }
-function boot(){ renderAll(); $("chapterOut").textContent=S.chapter.text||""; if(S.chapter.raw){const o=splitOut(S.chapter.raw);if(o.delta){$("deltaOut").textContent=o.delta;$("deltaOut").classList.remove("hidden");}} save(); }
+function boot(){ renderAll(); $("chapterOut").textContent=S.chapter.text||""; if(S.chapter.raw){const o=splitOut(S.chapter.raw);if(o.delta){$("deltaOut").textContent=o.delta;$("deltaOut").classList.remove("hidden");}} save(); initCloudSql(); }
 boot();
 </script>
 
